@@ -7,17 +7,28 @@ import (
 )
 
 func handler(w http.ResponseWriter, r *http.Request) {
-	t, err := template.ParseFiles("views/base.tmpl")
-	if err != nil {
-		log.Fatal(err)
+	files := []string{
+		"templates/base.tmpl",
+		"templates/home.tmpl",
 	}
 
-	if err := t.Execute(w, nil); err != nil {
-		log.Fatal(err)
+	ts, err := template.ParseFiles(files...)
+	if err != nil {
+		log.Print(err.Error())
+		http.Error(w, "Internal Server Error", 500)
+		return
+	}
+
+	err = ts.ExecuteTemplate(w, "base", nil)
+	if err != nil {
+		log.Print(err.Error())
+		http.Error(w, "Internal Server Error", 500)
 	}
 }
 
 func main() {
 	http.HandleFunc("/", handler)
-	http.ListenAndServe(":8010", nil)
+
+	http.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir("./static"))))
+	http.ListenAndServe("localhost:8010", nil)
 }
